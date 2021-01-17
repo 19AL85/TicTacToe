@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TicTacToe.Data;
+using TicTacToe.Models;
 using TicTacToe.Utilities;
 
 namespace TicTacToe
@@ -42,6 +43,7 @@ namespace TicTacToe
             services.AddControllersWithViews();
 
             services.AddScoped<SignInManager<IdentityUser>, AppSignInManager<IdentityUser>>();
+            services.AddSingleton<IGameManager, GameManager>();
 
         }
 

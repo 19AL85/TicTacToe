@@ -1,0 +1,77 @@
+﻿@model IEnumerable<Microsoft.AspNetCore.Identity.IdentityUser>
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Game</h1>
+<a class="btn btn-info" asp-action="GetReady">Get Ready</a>
+<div class="container">
+    <div class="row">
+        <div class="col-8">
+            <table class="table table-bordered" height="500px">
+                <tbody>
+                    <tr>
+                        <td>x</td>
+                        <td>x</td>
+                        <td>x</td>
+                    </tr>
+                    <tr>
+                        <td>o</td>
+                        <td>o</td>
+                        <td>o</td>
+                    </tr>
+                    <tr>
+                        <td>x</td>
+                        <td>x</td>
+                        <td>x</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-4">
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Ready to game
+                                    <span class="badge badge-primary badge-pill">@Model.Count()</span>
+                                </li>
+                               
+                            </ul>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Count() > 0)
+                    {
+                        <tr>
+                            <td>
+                                <div class="list-group">
+                                    @foreach (var item in @Model)
+                                    {
+                                        <a href="#" class="list-group-item list-group-item-action">
+                                            @item.Email
+                                        </a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td>No user</td>
+                        </tr>
+                    }
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
