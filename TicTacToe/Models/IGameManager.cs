@@ -8,6 +8,7 @@ namespace TicTacToe.Models
 {
     public interface IGameManager
     {
-        List<IdentityUser> ReadyUsers { get; set; }
+        List<Player> Players { get; set; }
+        Queue<Player> PlayersQ { get; set; }
     }
 }

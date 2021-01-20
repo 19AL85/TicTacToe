@@ -1,15 +1,20 @@
-﻿@model IEnumerable<Microsoft.AspNetCore.Identity.IdentityUser>
+﻿
+@using System.Security.Claims
 @{
     ViewData["Title"] = "Index";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Game</h1>
-<a class="btn btn-info" asp-action="GetReady">Get Ready</a>
+<h1>Game </h1>
+@if (User.Identity.IsAuthenticated)
+{
+    @*<a class="btn btn-info" asp-action="GetReady">Get Ready</a>*@
+}
+<input id="mail1" type="hidden" value="@User.FindFirstValue(ClaimTypes.Email)" />
 <div class="container">
     <div class="row">
         <div class="col-8">
-            <table class="table table-bordered" height="500px">
+            <table class="table table-bordered" height="500px" width="500px">
                 <tbody>
                     <tr>
                         <td>x</td>
@@ -30,48 +35,117 @@
             </table>
         </div>
         <div class="col-4">
+            <p id="player1"></p>
+            <p>VS</p>
+            <p id="player2"></p>
 
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>
-                            <ul class="list-group">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    Ready to game
-                                    <span class="badge badge-primary badge-pill">@Model.Count()</span>
-                                </li>
-                               
-                            </ul>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Count() > 0)
-                    {
-                        <tr>
-                            <td>
-                                <div class="list-group">
-                                    @foreach (var item in @Model)
-                                    {
-                                        <a href="#" class="list-group-item list-group-item-action">
-                                            @item.Email
-                                        </a>
-                                    }
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        <tr>
-                            <td>No user</td>
-                        </tr>
-                    }
+            <div>
+                @*<table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Ready to game
+                                <span id="countPill" class="badge badge-primary badge-pill">@Model.Count()</span>
+                            </li>
 
-                </tbody>
-            </table>
+                        </ul>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div id="raedyUsersList" class="list-group">
+                            @if (Model.Count() > 0)
+                            {
+                                @foreach (var item in @Model)
+                                {
+                                    <a href="#" class="list-group-item list-group-item-action">
+                                        @item.User.Email
+                                    </a>
+                                }
+                            }
+                            else
+                            {
+                                <p>No one there</p>
+                            }
+
+                        </div>
+                    </td>
+                </tr>
+
+
+            </tbody>
+        </table>*@
+            </div>
+           
         </div>
     </div>
 
 </div>
 
+@section Scripts{
+
+    <script src="js/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+        let connectionId;
+
+        const hubConnection = new signalR.HubConnectionBuilder()
+            .withUrl("https://localhost:5001/chat")
+            .build();
+
+        hubConnection.on("ReadyToGame", function (mail, count) {
+            document.getElementById('countPill').firstChild.textContent = count;
+
+            let a = document.createElement("a");
+            a.classList.add('list-group-item', 'list-group-item-action');
+            a.appendChild(document.createTextNode(mail));
+            let usersList = document.getElementById("raedyUsersList");
+            usersList.prepend(a);
+        });
+
+      
+        hubConnection.on("JoinToGame", function (data) {
+            document.getElementById('player1').innerHTML = data.player1.userEmail;
+            document.getElementById('player2').innerHTML = data.player2.userEmail;
+        })
+
+
+        hubConnection.start().then(() => {
+            connectionId = hubConnection.connectionId
+            console.log(connectionId);
+        });
+
+
+
+
+        hubConnection.on("Notify", function (mail) {
+            //let mail1 = document.getElementById("mail1").value;
+            //hubConnection.invoke("Disconnect", mail1, count);
+            alert(mail)
+        })
+
+        //document.getElementById("sendBtn").addEventListener("click", function (e) {
+        //    let mail1 = document.getElementById("mail1").value;
+        //    let count = document.getElementById("countPill").value;
+
+        //    hubConnection.invoke("ReadyToGame", mail1, count);
+        //});
+
+        //hubConnection.on("Name", (name) => {
+        //    document.getElementById('player2Name').innerText = name;
+
+
+        //});
+        //hubConnection.on("RedirectToHome", (message) => {
+        //    alert(message)
+        //    //$.get("/home");
+        //    window.location.href = "/home";
+
+        //});
+
+      
+    </script>
+} 

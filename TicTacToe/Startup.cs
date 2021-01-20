@@ -13,6 +13,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using TicTacToe.Data;
 using TicTacToe.Models;
+using TicTacToe.SignalR;
 using TicTacToe.Utilities;
 
 namespace TicTacToe
@@ -43,7 +44,8 @@ namespace TicTacToe
             services.AddControllersWithViews();
 
             services.AddScoped<SignInManager<IdentityUser>, AppSignInManager<IdentityUser>>();
-            services.AddSingleton<IGameManager, GameManager>();
+            services.AddSingleton<GameManager, GameManager>();
+            services.AddSignalR(options=> options.EnableDetailedErrors=true);
 
         }
 
@@ -71,10 +73,11 @@ namespace TicTacToe
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapRazorPages();
+                endpoints.MapHub<AppHub>("/chat");
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
-                endpoints.MapRazorPages();
             });
         }
     }

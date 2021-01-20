@@ -18,15 +18,15 @@ namespace TicTacToe.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ILogger<LogoutModel> _logger;
-        private readonly IGameManager _gameManager;
-        private readonly ApplicationDbContext _db;
+        //private readonly IGameManager _gameManager;
+        //private readonly ApplicationDbContext _db;
 
-        public LogoutModel(SignInManager<IdentityUser> signInManager, ILogger<LogoutModel> logger, IGameManager gameManager, ApplicationDbContext db)
+        public LogoutModel(SignInManager<IdentityUser> signInManager, ILogger<LogoutModel> logger)
         {
             _signInManager = signInManager;
             _logger = logger;
-            _gameManager = gameManager;
-            _db = db;
+            //_gameManager = gameManager;
+           // _db = db;
         }
 
         public void OnGet()
@@ -35,9 +35,9 @@ namespace TicTacToe.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPost(string returnUrl = null)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var user = _db.Users.Find(userId);
-            _gameManager.ReadyUsers.Remove(_gameManager.ReadyUsers.FirstOrDefault(x=>x.Id==userId));
+            //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            //var user = _db.Users.Find(userId);
+            //_gameManager.ReadyUsers.Remove(_gameManager.ReadyUsers.FirstOrDefault(x=>x.Id==userId));
             await _signInManager.SignOutAsync();
             _logger.LogInformation("User logged out.");
             if (returnUrl != null)

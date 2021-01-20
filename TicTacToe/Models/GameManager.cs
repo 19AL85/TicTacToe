@@ -6,12 +6,65 @@ using System.Threading.Tasks;
 
 namespace TicTacToe.Models
 {
-    public class GameManager : IGameManager
+    public class GameManager
     {
-        public List<IdentityUser> ReadyUsers { get; set; }
+        public List<Game> Games { get; set; }
+        public int GameIdCounter { get; private set; } = 0;
+
         public GameManager()
         {
-            ReadyUsers = new List<IdentityUser>();
+            Games = new List<Game>();
         }
+
+        private Game CreateGame(Player player)
+        {
+            player.GameId= ++GameIdCounter;
+            var game = new Game {Id= GameIdCounter, Player1 = player};
+            return game;
+        }
+
+        public async Task<Game> JoinToGameAsync(Player player)
+        {
+            return await Task.Run(()=> JoinToGame(player));
+        }
+
+        public Game JoinToGame(Player player)
+        {
+            var game = Games.FirstOrDefault(x => x.IsWaiting == true);
+            if (game != null)
+            {
+                
+                player.GameId = game.Id;
+
+                if (game.Player1 == null)
+                {
+                    player.Sign = 'X';
+                    game.Player1 = player;
+
+                }
+                else
+                {
+                    player.Sign = '0';
+                    game.Player2 = player;
+                }
+
+                game.IsWaiting = false;
+            }
+            else
+            {
+                player.Sign = 'X';
+                game=CreateGame(player);
+                Games.Add(game);
+            }
+            //while (game.Player2 == null)
+            //{
+
+            //}
+            return game;
+        }
+
+
+
+
     }
 }
