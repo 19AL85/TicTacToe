@@ -24,6 +24,66 @@ namespace TicTacToe.SignalR
             _db = db;
         }
 
+        public async Task MakeMove(Dictionary<string, string> data)
+        {
+            if (this.Context.User.Identity.IsAuthenticated)
+            {
+                var userId = this.Context.UserIdentifier;
+                Int32.TryParse(data["gameId"], out int id);
+                Int32.TryParse(data["cell"], out int position);
+                var game = _gameManager.Games.FirstOrDefault(x => x.Id == id);
+                Player player;
+
+                if (game.Player1.UserId == userId)
+                    player = game.Player1;
+                else
+                    player = game.Player2;
+
+                if (!game.IsWaiting && player.IsMyTurn)
+                {
+                    var cell = game.Field.FirstOrDefault(x => x.Position == position);
+
+                    if (game.Player1.UserId == userId)
+                    {
+                        if (cell.IsFree)
+                        {
+                            cell.Sign = game.Player1.Sign;
+                            cell.IsFree = false;
+                            await Clients.Client(game.Player2.ConnectionId).SendAsync("MakeMove", new { sign = game.Player1.Sign, cell = data["cell"] });
+                            await Clients.Caller.SendAsync("MakeMove", new { sign = game.Player1.Sign, cell = data["cell"] });
+                            game.SwapPlayerTurns();
+                        }
+                        else
+                        {
+                            await Clients.Caller.SendAsync("AlertMessage", "Wrong Move");
+                        }
+                    }
+                    else
+                    {
+                        if (cell.IsFree)
+                        {
+                            cell.Sign = game.Player2.Sign;
+                            cell.IsFree = false;
+                            await Clients.Client(game.Player1.ConnectionId).SendAsync("MakeMove", new { sign = game.Player2.Sign, cell = data["cell"] });
+                            await Clients.Caller.SendAsync("MakeMove", new { sign = game.Player2.Sign, cell = data["cell"] });
+                            game.SwapPlayerTurns();
+                        }
+                        else
+                        {
+                            await Clients.Caller.SendAsync("AlertMessage", "Wrong Move");
+                        }
+                    }
+                }
+                else
+                {
+                    await Clients.Caller.SendAsync("AlertMessage", "Not yor move");
+                }
+
+            }
+
+            //доделат... . В место списка игроков попробовать словарь
+        }
+
         public async override Task OnConnectedAsync()
         {
             if (this.Context.User.Identity.IsAuthenticated)
@@ -35,11 +95,29 @@ namespace TicTacToe.SignalR
 
                 if (game.Player2 != null)
                 {
-                    await Clients.Client(game.Player1.ConnectionId).SendAsync("JoinToGame", new { player1 = game.Player1, player2 = game.Player2 });
-                    await Clients.Caller.SendAsync("JoinToGame", new { player1 = game.Player1, player2 = game.Player2 });
+                    await Clients.Client(game.Player1.ConnectionId).SendAsync("JoinToGame", new
+                    {
+                        player1 = game.Player1,
+                        player2 = game.Player2,
+                        gameId = game.Id,
+                        msg = $"{game.Player2.UserEmail} connected"
+                    });
+                    await Clients.Caller.SendAsync("JoinToGame", new
+                    {
+                        player1 = game.Player1,
+                        player2 = game.Player2,
+                        gameId = game.Id,
+                        msg = $"Game has begun"
+                    });
                 }
                 else
-                    await Clients.Caller.SendAsync("JoinToGame", new { player1 = game.Player1, player2=new { userEmail = "Waiting" } });
+                    await Clients.Caller.SendAsync("JoinToGame", new
+                    {
+                        player1 = game.Player1,
+                        player2 = new { userEmail = "Waiting" },
+                        gameId = game.Id,
+                        msg = "...Waiting opponent"
+                    });
             }
 
             await base.OnConnectedAsync();
@@ -50,26 +128,37 @@ namespace TicTacToe.SignalR
             if (this.Context.User.Identity.IsAuthenticated)
             {
                 var userId = this.Context.UserIdentifier;
-                var game = _gameManager.Games.FirstOrDefault(x => x.Player1.User.Id == userId || x.Player2.User.Id == userId);
+                var game = _gameManager.Games.FirstOrDefault(x => x.Player1?.User.Id == userId || x.Player2?.User.Id == userId);
 
-                //if(game.Player1==null && game.Player2==null)
-                //_gameManager.Games.Remove(game);
-
-                if (game.Player1.User.Id == userId)
-                {
-                    //await Clients.Client(game.Player2.ConnectionId).SendAsync("Notify", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
-                    await Clients.Client(game.Player2.ConnectionId).SendAsync("RedirectToHome", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
-                    game.Player1 = null;
-                    game.IsWaiting = true;
-                }
+                if (game.IsWaiting)
+                    _gameManager.Games.Remove(game);
                 else
                 {
-                    //await Clients.Client(game.Player1.ConnectionId).SendAsync("Notify", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
-                    await Clients.Client(game.Player1.ConnectionId).SendAsync("RedirectToHome", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
-                    game.Player2 = null;
-                    game.IsWaiting = true;
+                    if (game.Player1.User.Id == userId)
+                    {
+                        //await Clients.Client(game.Player2.ConnectionId).SendAsync("Notify", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
+                        await Clients.Client(game.Player2.ConnectionId).SendAsync("AlertMessage", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
+                        game.ResetPlayer2();
+                    }
+                    else
+                    {
+                        //await Clients.Client(game.Player1.ConnectionId).SendAsync("Notify", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
+                        await Clients.Client(game.Player1.ConnectionId).SendAsync("AlertMessage", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
+                        game.ResetPlayer1();
+                    }
+
+                    await Clients.Client(game.Player1.ConnectionId).SendAsync("JoinToGame", new
+                    {
+                        player1 = game.Player1,
+                        player2 = new { userEmail = "Waiting" },
+                        gameId = game.Id,
+                        msg = ""
+                    });
                 }
-                _gameManager.Games.Remove(game);
+
+
+
+                //_gameManager.Games.Remove(game);
                 //var user = _gameManager.ReadyUsers.FirstOrDefault(x => x.Id == userId);
                 //_gameManager.ReadyUsers.Remove(user);
 
@@ -81,71 +170,6 @@ namespace TicTacToe.SignalR
         }
 
 
-        //public async override Task OnDisconnectedAsync(Exception exception)
-        //{
-        //    if (this.Context.User.Identity.IsAuthenticated)
-        //    {
-        //        var userId = this.Context.UserIdentifier;
-        //        var game = _gameManager.Games.FirstOrDefault(x => x.Player1.User.Id == userId || x.Player2.User.Id == userId);
 
-        //        //if(game.Player1==null && game.Player2==null)
-        //            //_gameManager.Games.Remove(game);
-
-        //        if (game.Player1.User.Id == userId)
-        //        {
-        //            //await Clients.Client(game.Player2.ConnectionId).SendAsync("Notify", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
-        //            await Clients.Client(game.Player2.ConnectionId).SendAsync("RedirectToHome", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
-        //            game.Player1 = null;
-        //            game.IsWaiting = true;
-        //        }
-        //        else
-        //        {
-        //            //await Clients.Client(game.Player1.ConnectionId).SendAsync("Notify", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
-        //            await Clients.Client(game.Player1.ConnectionId).SendAsync("RedirectToHome", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
-        //            game.Player2 = null;
-        //            game.IsWaiting = true;
-        //        }
-        //        _gameManager.Games.Remove(game);
-        //        //var user = _gameManager.ReadyUsers.FirstOrDefault(x => x.Id == userId);
-        //        //_gameManager.ReadyUsers.Remove(user);
-
-        //        //var userEmail = this.Context.User.FindFirstValue(ClaimTypes.Email);
-
-        //    }
-
-        //    await base.OnDisconnectedAsync(exception);
-        //}
-
-
-        //public async override Task OnConnectedAsync()
-        //{
-
-
-
-        //    if (this.Context.User.Identity.IsAuthenticated)
-        //    {
-        //        var userId = this.Context.UserIdentifier;
-        //        var game = _gameManager.Games.FirstOrDefault(x => x.Player1.User.Id == userId || x.Player2.User.Id == userId);
-        //        Player player;
-
-        //        if (game.Player1.User.Id == userId)
-        //        {
-        //            player = game.Player1;
-        //        }
-        //        else
-        //        {
-        //            player = game.Player2;
-
-        //        }
-
-        //        player.ConnectionId = Context.ConnectionId;
-        //        //var user = _db.Users.Find(userId);
-        //        //_gameManager.Players.Add(new Player(user, true));
-
-        //    }
-
-
-        //    await base.OnConnectedAsync();
-        //}
     }
 }

@@ -5,119 +5,169 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Game </h1>
+
+
+<h1 class="text-center">Tic Tac Toe </h1>
 @if (User.Identity.IsAuthenticated)
 {
     @*<a class="btn btn-info" asp-action="GetReady">Get Ready</a>*@
 }
-<input id="mail1" type="hidden" value="@User.FindFirstValue(ClaimTypes.Email)" />
+
+<input id="gameId" type="hidden" />
+
 <div class="container">
-    <div class="row">
-        <div class="col-8">
-            <table class="table table-bordered" height="500px" width="500px">
-                <tbody>
-                    <tr>
-                        <td>x</td>
-                        <td>x</td>
-                        <td>x</td>
-                    </tr>
-                    <tr>
-                        <td>o</td>
-                        <td>o</td>
-                        <td>o</td>
-                    </tr>
-                    <tr>
-                        <td>x</td>
-                        <td>x</td>
-                        <td>x</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="col-4">
-            <p id="player1"></p>
-            <p>VS</p>
-            <p id="player2"></p>
+    <div class="row d-flex justify-content-center mt-5">
+        <div>
+            <div class="row border-bottom" style="width:300px; border-width:5px!important;">
+                <div id="cell_0" data-cell="0" class="cell col-4 border-right" style="height:100px; padding:15px!important; border-width:5px!important;">
 
-            <div>
-                @*<table class="table">
-            <thead>
-                <tr>
-                    <th>
-                        <ul class="list-group">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Ready to game
-                                <span id="countPill" class="badge badge-primary badge-pill">@Model.Count()</span>
-                            </li>
+                </div>
+                <div id="cell_1" data-cell="1" class="cell col-4" style="padding:15px!important;">
 
-                        </ul>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
-                        <div id="raedyUsersList" class="list-group">
-                            @if (Model.Count() > 0)
-                            {
-                                @foreach (var item in @Model)
-                                {
-                                    <a href="#" class="list-group-item list-group-item-action">
-                                        @item.User.Email
-                                    </a>
-                                }
-                            }
-                            else
-                            {
-                                <p>No one there</p>
-                            }
+                </div>
+                <div id="cell_2" data-cell="2" class="cell col-4 border-left" style="height:100px; padding:15px!important; border-width:5px!important;">
 
-                        </div>
-                    </td>
-                </tr>
-
-
-            </tbody>
-        </table>*@
+                </div>
             </div>
-           
+            <div class="row" style="width:300px;">
+                <div id="cell_3" data-cell="3" class="cell col-4 border-right" style="height:100px; padding:15px!important; border-width:5px!important;">
+
+                </div>
+                <div id="cell_4" data-cell="4" class="cell col-4" style="padding:15px!important;">
+
+                </div>
+                <div id="cell_5" data-cell="5" class="cell col-4 border-left" style="height:100px; padding:15px!important; border-width:5px!important;">
+
+                </div>
+            </div>
+            <div class="row border-top" style="width:300px; border-width:5px!important;">
+                <div id="cell_6" data-cell="6" class="cell col-4 border-right" style="height:100px; padding:15px!important; border-width:5px!important;">
+
+                </div>
+                <div id="cell_7" data-cell="7" class="cell col-4" style="padding:15px!important;">
+
+                </div>
+                <div id="cell_8" data-cell="8" class="cell col-4 border-left" style="height:100px; padding:15px!important; border-width:5px!important;">
+
+                </div>
+            </div>
         </div>
     </div>
 
+    <div class="row list-group list-group-horizontal mt-5">
+        <div id="player1" class="col-5 list-group-item active text-right"></div>
+        <div class="col-2 list-group-item font-weight-bolder text-center">VS</div>
+        <div id="player2" class="col-5 list-group-item"></div>
+
+    </div>
+
 </div>
+
+<div aria-live="polite" aria-atomic="true" style="position: absolute; top:70px; right:50px; width:300px; max-height: 300px;">
+    <div id="toast" class="toast" style="position: absolute; top: 0; right: 0; ">
+        <div class="toast-header">
+            <strong class="mr-auto">Message</strong>
+            <small></small>
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div id="toast-body" class="toast-body font-weight-bold">
+
+        </div>
+    </div>
+</div>
+
+
 
 @section Scripts{
 
     <script src="js/signalr/dist/browser/signalr.min.js"></script>
     <script>
         let connectionId;
+        let cells = document.getElementsByClassName("cell");
+        $('.toast').toast({ delay: 3000 });
+
+        for (var i = 0; i < cells.length; i++) {
+            cells[i].addEventListener('click', (e) => {
+
+              //  if (e.target.tagName == 'DIV') {
+                    let gameId = document.getElementById('gameId').value;
+                    hubConnection.invoke("MakeMove", { gameId: gameId, cell: e.currentTarget.dataset.cell });
+
+               // }
+                
+            });
+        };
 
         const hubConnection = new signalR.HubConnectionBuilder()
             .withUrl("https://localhost:5001/chat")
             .build();
 
-        hubConnection.on("ReadyToGame", function (mail, count) {
-            document.getElementById('countPill').firstChild.textContent = count;
+        hubConnection.on("MakeMove", function (data) {
+            let img = document.createElement("img");
+            img.src = `/image/${data.sign}`;
+            img.classList.add('w-100');
 
-            let a = document.createElement("a");
-            a.classList.add('list-group-item', 'list-group-item-action');
-            a.appendChild(document.createTextNode(mail));
-            let usersList = document.getElementById("raedyUsersList");
-            usersList.prepend(a);
-        });
+            let cell = document.getElementById(`cell_${data.cell}`);
+            cell.appendChild(img);
 
-      
-        hubConnection.on("JoinToGame", function (data) {
-            document.getElementById('player1').innerHTML = data.player1.userEmail;
-            document.getElementById('player2').innerHTML = data.player2.userEmail;
+            changeActivePlayer();
         })
 
 
-        hubConnection.start().then(() => {
-            connectionId = hubConnection.connectionId
-            console.log(connectionId);
-        });
 
+        hubConnection.on("AlertMessage", function (msg) {
+            document.getElementById('toast-body').innerHTML = msg;
+
+            $('.toast').toast('show');
+        })
+
+        function clearField() {
+            let field = document.getElementsByClassName('cell');
+            for (var i = 0; i < field.length; i++) {
+                field[i].querySelectorAll('*').forEach(i => i.remove());
+            }
+        }
+
+        function changeActivePlayer() {
+            let active = document.getElementsByClassName('active')[0];
+            let p1 = document.getElementById('player1');
+            let p2 = document.getElementById('player2');
+
+            if (p1 == active) {
+                p2.classList.add('active');
+            }
+            else {
+                p1.classList.add('active');
+            }
+
+            active.classList.remove('active');
+        }
+
+        hubConnection.on("JoinToGame", function (data) {
+            clearField();
+            document.getElementById('player1').innerHTML = data.player1.userEmail;
+            document.getElementById('player2').innerHTML = data.player2.userEmail;
+            document.getElementById('gameId').value = data.gameId;
+
+            if (data.msg.length > 0) {
+                document.getElementById('toast-body').innerHTML = data.msg;
+                $('.toast').toast('show');
+            }
+           
+        })
+
+
+
+
+        hubConnection.start()
+            .then(() => {
+                connectionId = hubConnection.connectionId
+                console.log(connectionId);
+
+            })
+            .catch(err => alert(err));
 
 
 
@@ -127,25 +177,8 @@
             alert(mail)
         })
 
-        //document.getElementById("sendBtn").addEventListener("click", function (e) {
-        //    let mail1 = document.getElementById("mail1").value;
-        //    let count = document.getElementById("countPill").value;
-
-        //    hubConnection.invoke("ReadyToGame", mail1, count);
-        //});
-
-        //hubConnection.on("Name", (name) => {
-        //    document.getElementById('player2Name').innerText = name;
 
 
-        //});
-        //hubConnection.on("RedirectToHome", (message) => {
-        //    alert(message)
-        //    //$.get("/home");
-        //    window.location.href = "/home";
 
-        //});
-
-      
     </script>
 } 

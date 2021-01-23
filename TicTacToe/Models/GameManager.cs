@@ -35,24 +35,26 @@ namespace TicTacToe.Models
             {
                 
                 player.GameId = game.Id;
+                player.Sign = WebConst.ImgRing;
 
-                if (game.Player1 == null)
-                {
-                    player.Sign = 'X';
-                    game.Player1 = player;
+                //if (game.Player1 == null)
+                //{
+                //    player.Sign = 'X';
+                //    game.Player1 = player;
 
-                }
-                else
-                {
-                    player.Sign = '0';
-                    game.Player2 = player;
-                }
-
+                //}
+                //else
+                //{
+                //    player.Sign = '0';
+                //    game.Player2 = player;
+                //}
+                game.Player2 = player;
                 game.IsWaiting = false;
             }
             else
             {
-                player.Sign = 'X';
+                player.Sign = WebConst.ImgCross;
+                player.IsMyTurn = true;
                 game=CreateGame(player);
                 Games.Add(game);
             }
@@ -63,7 +65,7 @@ namespace TicTacToe.Models
             return game;
         }
 
-
+        
 
 
     }

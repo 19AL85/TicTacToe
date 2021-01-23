@@ -15,7 +15,7 @@ namespace TicTacToe.Models
 
         public string ConnectionId { get; set; }
         public int GameId{ get; set; }
-        public char Sign { get; set; }
+        public string Sign { get; set; }
 
   
         public bool IsMyTurn { get; set; }
