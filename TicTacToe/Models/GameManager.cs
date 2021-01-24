@@ -33,21 +33,9 @@ namespace TicTacToe.Models
             var game = Games.FirstOrDefault(x => x.IsWaiting == true);
             if (game != null)
             {
-                
                 player.GameId = game.Id;
                 player.Sign = WebConst.ImgRing;
 
-                //if (game.Player1 == null)
-                //{
-                //    player.Sign = 'X';
-                //    game.Player1 = player;
-
-                //}
-                //else
-                //{
-                //    player.Sign = '0';
-                //    game.Player2 = player;
-                //}
                 game.Player2 = player;
                 game.IsWaiting = false;
             }
@@ -58,15 +46,9 @@ namespace TicTacToe.Models
                 game=CreateGame(player);
                 Games.Add(game);
             }
-            //while (game.Player2 == null)
-            //{
 
-            //}
             return game;
         }
-
-        
-
 
     }
 }

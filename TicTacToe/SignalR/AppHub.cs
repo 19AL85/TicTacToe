@@ -107,7 +107,7 @@ namespace TicTacToe.SignalR
             {
                 var userId = this.Context.UserIdentifier;
                 var user = _db.Users.Find(userId);
-                var player = new Player { ConnectionId = Context.ConnectionId, User = user, UserId = user.Id, UserEmail = user.Email };
+                var player = new Player { ConnectionId = Context.ConnectionId, UserId = user.Id, UserEmail = user.Email };
                 var game = _gameManager.JoinToGame(player);
 
                 if (game.Player2 != null)
@@ -152,13 +152,13 @@ namespace TicTacToe.SignalR
             if (this.Context.User.Identity.IsAuthenticated)
             {
                 var userId = this.Context.UserIdentifier;
-                var game = _gameManager.Games.FirstOrDefault(x => x.Player1?.User.Id == userId || x.Player2?.User.Id == userId);
+                var game = _gameManager.Games.FirstOrDefault(x => x.Player1?.UserId == userId || x.Player2?.UserId == userId);
 
                 if (game.IsWaiting)
                     _gameManager.Games.Remove(game);
                 else
                 {
-                    if (game.Player1.User.Id == userId)
+                    if (game.Player1.UserId == userId)
                     {
                         await Clients.Client(game.Player2.ConnectionId).SendAsync("AlertMessage", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
                         game.ResetPlayer2();

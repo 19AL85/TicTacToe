@@ -66,8 +66,7 @@ namespace TicTacToe
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            //app.UseCors();
-
+  
             app.UseRouting();
 
             app.UseAuthentication();

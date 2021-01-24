@@ -8,8 +8,6 @@ namespace TicTacToe.Models
 {
     public class Player
     {
-        public IdentityUser User { get; set; }
-
         public string UserId { get; set; }
         public string UserEmail { get; set; }
 
@@ -17,18 +15,9 @@ namespace TicTacToe.Models
         public int GameId{ get; set; }
         public string Sign { get; set; }
 
-  
-        public bool IsMyTurn { get; set; }
+        public bool IsMyTurn { get; set; } = false;
 
-        public Player(IdentityUser user,  bool isMyTurn=false)
-        {
-            User = user;
-            IsMyTurn = IsMyTurn;
-        }
-        public Player()
-        {
 
-        }
 
     }
 }
