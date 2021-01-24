@@ -20,7 +20,7 @@ namespace TicTacToe.Models
             Field = GetField();
         }
 
-        public List<FieldCell> GetField()
+        private List<FieldCell> GetField()
         {
             var field = new List<FieldCell>();
             for (int i = 0; i < 9; i++)
@@ -50,10 +50,55 @@ namespace TicTacToe.Models
             Field = GetField();
         }
 
+        public void ResetField()
+        {
+            Field = GetField();
+        }
+
         public void SwapPlayerTurns()
         {
             Player1.IsMyTurn = !Player1.IsMyTurn;
             Player2.IsMyTurn = !Player2.IsMyTurn;
+        }
+
+        private bool CheckRows(string sign)
+        {
+            if (Field[0].Sign == sign && Field[1].Sign == sign && Field[2].Sign == sign)
+                return true;
+            if (Field[3].Sign == sign && Field[4].Sign == sign && Field[5].Sign == sign)
+                return true;
+            if (Field[6].Sign == sign && Field[7].Sign == sign && Field[8].Sign == sign)
+                return true;
+
+            return false;
+        }
+        private bool CheckColumns(string sign)
+        {
+            if (Field[0].Sign == sign && Field[3].Sign == sign && Field[6].Sign == sign)
+                return true;
+            if (Field[1].Sign == sign && Field[4].Sign == sign && Field[7].Sign == sign)
+                return true;
+            if (Field[2].Sign == sign && Field[5].Sign == sign && Field[8].Sign == sign)
+                return true;
+
+            return false;
+        }
+        private bool CheckDiagonals(string sign)
+        {
+            if (Field[0].Sign == sign && Field[4].Sign == sign && Field[8].Sign == sign)
+                return true;
+            if (Field[2].Sign == sign && Field[4].Sign == sign && Field[6].Sign == sign)
+                return true;
+
+            return false;
+        }
+
+        public bool CheckWinner(string sign)
+        {
+            if (CheckRows(sign) || CheckColumns(sign) || CheckDiagonals(sign))
+                return true;
+
+            return false;
         }
     }
 }

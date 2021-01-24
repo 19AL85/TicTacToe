@@ -51,7 +51,17 @@ namespace TicTacToe.SignalR
                             cell.IsFree = false;
                             await Clients.Client(game.Player2.ConnectionId).SendAsync("MakeMove", new { sign = game.Player1.Sign, cell = data["cell"] });
                             await Clients.Caller.SendAsync("MakeMove", new { sign = game.Player1.Sign, cell = data["cell"] });
+
+                            if (game.CheckWinner(game.Player1.Sign))
+                            {
+                                await Clients.Client(game.Player2.ConnectionId).SendAsync("GameOver", $"{game.Player1.UserEmail} wins!!");
+                                await Clients.Caller.SendAsync("GameOver", "You Win!");
+                                game.ResetField();
+                            }
                             game.SwapPlayerTurns();
+                            await Clients.Client(game.Player2.ConnectionId).SendAsync("SetActivePlayer", new { player1=game.Player1.IsMyTurn, player2 = game.Player2.IsMyTurn });
+                            await Clients.Caller.SendAsync("SetActivePlayer", new { player1 = game.Player1.IsMyTurn, player2 = game.Player2.IsMyTurn });
+
                         }
                         else
                         {
@@ -66,7 +76,16 @@ namespace TicTacToe.SignalR
                             cell.IsFree = false;
                             await Clients.Client(game.Player1.ConnectionId).SendAsync("MakeMove", new { sign = game.Player2.Sign, cell = data["cell"] });
                             await Clients.Caller.SendAsync("MakeMove", new { sign = game.Player2.Sign, cell = data["cell"] });
+
+                            if (game.CheckWinner(game.Player2.Sign))
+                            {
+                                await Clients.Client(game.Player1.ConnectionId).SendAsync("GameOver", $"{game.Player2.UserEmail} wins!!");
+                                await Clients.Caller.SendAsync("GameOver", "You Win!");
+                                game.ResetField();
+                            }
                             game.SwapPlayerTurns();
+                            await Clients.Client(game.Player1.ConnectionId).SendAsync("SetActivePlayer", new { player1 = game.Player1.IsMyTurn, player2 = game.Player2.IsMyTurn });
+                            await Clients.Caller.SendAsync("SetActivePlayer", new { player1 = game.Player1.IsMyTurn, player2 = game.Player2.IsMyTurn });
                         }
                         else
                         {
@@ -78,10 +97,8 @@ namespace TicTacToe.SignalR
                 {
                     await Clients.Caller.SendAsync("AlertMessage", "Not yor move");
                 }
-
             }
 
-            //доделат... . В место списка игроков попробовать словарь
         }
 
         public async override Task OnConnectedAsync()
@@ -109,8 +126,12 @@ namespace TicTacToe.SignalR
                         gameId = game.Id,
                         msg = $"Game has begun"
                     });
+
+                    await Clients.Client(game.Player1.ConnectionId).SendAsync("SetActivePlayer", new { player1 = game.Player1.IsMyTurn, player2 = game.Player2.IsMyTurn });
+                    await Clients.Caller.SendAsync("SetActivePlayer", new { player1 = game.Player1.IsMyTurn, player2 = game.Player2.IsMyTurn });
                 }
                 else
+                {
                     await Clients.Caller.SendAsync("JoinToGame", new
                     {
                         player1 = game.Player1,
@@ -118,6 +139,9 @@ namespace TicTacToe.SignalR
                         gameId = game.Id,
                         msg = "...Waiting opponent"
                     });
+                    //await Clients.Caller.SendAsync("SetActivePlayer", new { player1 = game.Player1.IsMyTurn, player2 = game.Player2.IsMyTurn });
+                }
+                   
             }
 
             await base.OnConnectedAsync();
@@ -136,13 +160,11 @@ namespace TicTacToe.SignalR
                 {
                     if (game.Player1.User.Id == userId)
                     {
-                        //await Clients.Client(game.Player2.ConnectionId).SendAsync("Notify", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
                         await Clients.Client(game.Player2.ConnectionId).SendAsync("AlertMessage", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
                         game.ResetPlayer2();
                     }
                     else
                     {
-                        //await Clients.Client(game.Player1.ConnectionId).SendAsync("Notify", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
                         await Clients.Client(game.Player1.ConnectionId).SendAsync("AlertMessage", $"{this.Context.User.FindFirstValue(ClaimTypes.Email)} disconnected");
                         game.ResetPlayer1();
                     }
@@ -155,14 +177,6 @@ namespace TicTacToe.SignalR
                         msg = ""
                     });
                 }
-
-
-
-                //_gameManager.Games.Remove(game);
-                //var user = _gameManager.ReadyUsers.FirstOrDefault(x => x.Id == userId);
-                //_gameManager.ReadyUsers.Remove(user);
-
-                //var userEmail = this.Context.User.FindFirstValue(ClaimTypes.Email);
 
             }
 

@@ -55,7 +55,7 @@
     </div>
 
     <div class="row list-group list-group-horizontal mt-5">
-        <div id="player1" class="col-5 list-group-item active text-right"></div>
+        <div id="player1" class="col-5 list-group-item text-right"></div>
         <div class="col-2 list-group-item font-weight-bolder text-center">VS</div>
         <div id="player2" class="col-5 list-group-item"></div>
 
@@ -91,14 +91,36 @@
         for (var i = 0; i < cells.length; i++) {
             cells[i].addEventListener('click', (e) => {
 
-              //  if (e.target.tagName == 'DIV') {
-                    let gameId = document.getElementById('gameId').value;
-                    hubConnection.invoke("MakeMove", { gameId: gameId, cell: e.currentTarget.dataset.cell });
+                //  if (e.target.tagName == 'DIV') {
+                let gameId = document.getElementById('gameId').value;
+                hubConnection.invoke("MakeMove", { gameId: gameId, cell: e.currentTarget.dataset.cell });
 
-               // }
-                
+                // }
+
             });
         };
+
+        function clearField() {
+            let field = document.getElementsByClassName('cell');
+            for (var i = 0; i < field.length; i++) {
+                field[i].querySelectorAll('*').forEach(i => i.remove());
+            }
+        }
+
+        //function changeActivePlayer() {
+        //    let active = document.getElementsByClassName('active')[0];
+        //    let p1 = document.getElementById('player1');
+        //    let p2 = document.getElementById('player2');
+
+        //    if (p1 == active) {
+        //        p2.classList.add('active');
+        //    }
+        //    else {
+        //        p1.classList.add('active');
+        //    }
+
+        //    active.classList.remove('active');
+        //}
 
         const hubConnection = new signalR.HubConnectionBuilder()
             .withUrl("https://localhost:5001/chat")
@@ -109,12 +131,13 @@
             img.src = `/image/${data.sign}`;
             img.classList.add('w-100');
 
+
+
             let cell = document.getElementById(`cell_${data.cell}`);
             cell.appendChild(img);
 
-            changeActivePlayer();
+           // changeActivePlayer();
         })
-
 
 
         hubConnection.on("AlertMessage", function (msg) {
@@ -123,27 +146,11 @@
             $('.toast').toast('show');
         })
 
-        function clearField() {
-            let field = document.getElementsByClassName('cell');
-            for (var i = 0; i < field.length; i++) {
-                field[i].querySelectorAll('*').forEach(i => i.remove());
-            }
-        }
+        hubConnection.on("GameOver", function (msg) {
+            alert(msg);
+            clearField();
 
-        function changeActivePlayer() {
-            let active = document.getElementsByClassName('active')[0];
-            let p1 = document.getElementById('player1');
-            let p2 = document.getElementById('player2');
-
-            if (p1 == active) {
-                p2.classList.add('active');
-            }
-            else {
-                p1.classList.add('active');
-            }
-
-            active.classList.remove('active');
-        }
+        })
 
         hubConnection.on("JoinToGame", function (data) {
             clearField();
@@ -155,28 +162,27 @@
                 document.getElementById('toast-body').innerHTML = data.msg;
                 $('.toast').toast('show');
             }
-           
+
         })
 
+        hubConnection.on("SetActivePlayer", function (data) {
+            if (data.player1) {
+                document.getElementById('player1').classList.add('active');
+                document.getElementById('player2').classList.remove('active');
+            }
+            if (data.player2) {
+                document.getElementById('player2').classList.add('active');
+                document.getElementById('player1').classList.remove('active');
+            }
 
-
+        })
 
         hubConnection.start()
             .then(() => {
                 connectionId = hubConnection.connectionId
                 console.log(connectionId);
 
-            })
-            .catch(err => alert(err));
-
-
-
-        hubConnection.on("Notify", function (mail) {
-            //let mail1 = document.getElementById("mail1").value;
-            //hubConnection.invoke("Disconnect", mail1, count);
-            alert(mail)
-        })
-
+            }).catch(err => alert(err));
 
 
 
