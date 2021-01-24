@@ -30,7 +30,7 @@ namespace TicTacToe.Models
             return field;
         }
 
-        public void ResetPlayer1()
+        public void Player2DisconnectReset()
         {
             Player1.IsMyTurn = true;
             Player1.Sign = WebConst.ImgCross;
@@ -39,7 +39,7 @@ namespace TicTacToe.Models
             IsWaiting = true;
             Field = GetField();
         }
-        public void ResetPlayer2()
+        public void Player1DisconectReset()
         {
             Player1 = Player2;
             Player1.IsMyTurn = true;

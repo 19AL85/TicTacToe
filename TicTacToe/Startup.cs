@@ -75,7 +75,7 @@ namespace TicTacToe
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();
-                endpoints.MapHub<AppHub>("/chat");
+                endpoints.MapHub<AppHub>("/tictactoe");
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");

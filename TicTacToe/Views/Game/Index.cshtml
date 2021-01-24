@@ -123,7 +123,7 @@
         //}
 
         const hubConnection = new signalR.HubConnectionBuilder()
-            .withUrl("https://localhost:5001/chat")
+            .withUrl("/tictactoe")
             .build();
 
         hubConnection.on("MakeMove", function (data) {
